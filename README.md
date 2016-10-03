@@ -1,4 +1,4 @@
-# docker-compose-wp
+# docker-compose-laravel
 Laravel development environment based on Docker Compose.
 
 ## How to use
