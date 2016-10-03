@@ -1,0 +1,78 @@
+data:
+    build: dockerfiles/data
+    volumes:
+        - ./laravel:/var/www/html
+
+db:
+    image: mysql:5.5
+    ports:
+        - 3306
+    environment:
+        MYSQL_ROOT_PASSWORD: root
+        MYSQL_DATABASE: sgf
+        MYSQL_USER: docker
+        MYSQL_PASSWORD: docker
+
+mysql:
+    image: mysql:5.5
+    links:
+        - db
+    entrypoint: mysql 
+    command: --host=db --user=docker --password=docker laravel
+
+php:  
+    build: dockerfiles/php
+    volumes_from:
+        - data
+    entrypoint: php
+    command: "-"
+
+web:  
+    build: dockerfiles/php
+    volumes_from:
+        - data
+    links:
+        - db
+    ports:
+        - "8000:8000"
+    entrypoint: ["php", "artisan"]
+    command: serve --host=0.0.0.0
+
+composer:  
+    build: dockerfiles/php
+    volumes_from:
+        - data
+    entrypoint: composer
+    command: "-"
+
+artisan:  
+    build: dockerfiles/php
+    volumes_from:
+        - data
+    links:
+        - db
+    entrypoint: ["php", "artisan"]
+    command: "-"
+
+node:  
+    build: dockerfiles/node
+    volumes_from:
+        - data
+    working_dir: /var/www/html
+
+gulp:  
+    build: dockerfiles/node
+    volumes_from:
+        - data
+    working_dir: /var/www/html
+    environment:
+        DISABLE_NOTIFIER: 'true'
+    entrypoint: ["gulp"]
+    command: "default"
+
+backup:
+    image: mysql
+    links:
+        - db:db
+    entrypoint: mysqldump
+    command: --user=docker --password=docker --host=db sge #dump20160425.sql
