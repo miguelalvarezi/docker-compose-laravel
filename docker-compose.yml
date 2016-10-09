@@ -1,78 +1,94 @@
-data:
-    build: dockerfiles/data
-    volumes:
-        - ./laravel:/var/www/html
+version: '2'
+services:
+    data:
+        build: dockerfiles/data
+        volumes:
+            - ./laravel:/var/www/html
 
-db:
-    image: mysql:5.5
-    ports:
-        - 3306
-    environment:
-        MYSQL_ROOT_PASSWORD: root
-        MYSQL_DATABASE: laravel
-        MYSQL_USER: docker
-        MYSQL_PASSWORD: docker
+    db:
+        image: mysql:5.5
+        ports:
+            - 3306
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE: laravel
+            MYSQL_USER: docker
+            MYSQL_PASSWORD: docker
 
-mysql:
-    image: mysql:5.5
-    links:
-        - db
-    entrypoint: mysql 
-    command: --host=db --user=docker --password=docker laravel
+    mysql:
+        image: mysql:5.5
+        links:
+            - db
+        entrypoint: mysql 
+        command: --host=db --user=docker --password=docker --default-character-set=utf8 laravel
 
-php:  
-    build: dockerfiles/php
-    volumes_from:
-        - data
-    entrypoint: php
-    command: "-"
+    php:  
+        build: dockerfiles/php
+        volumes_from:
+            - data
+        entrypoint: php
+        command: "-"
+        networks:
+            - default
+            - viapais
 
-web:  
-    build: dockerfiles/php
-    volumes_from:
-        - data
-    links:
-        - db
-    ports:
-        - "8000:8000"
-    entrypoint: ["php", "artisan"]
-    command: serve --host=0.0.0.0
+    web:  
+        build: dockerfiles/php
+        volumes_from:
+            - data
+        links:
+            - db
+        ports:
+            - "8000:8000"
+        entrypoint: ["php", "artisan"]
+        command: serve --host=0.0.0.0
+        networks:
+            - default
+            - viapais
 
-composer:  
-    build: dockerfiles/php
-    volumes_from:
-        - data
-    entrypoint: composer
-    command: "-"
+    composer:  
+        build: dockerfiles/php
+        volumes_from:
+            - data
+        entrypoint: composer
+        command: "-"
 
-artisan:  
-    build: dockerfiles/php
-    volumes_from:
-        - data
-    links:
-        - db
-    entrypoint: ["php", "artisan"]
-    command: "-"
+    artisan:  
+        build: dockerfiles/php
+        volumes_from:
+            - data
+        links:
+            - db
+        entrypoint: ["php", "artisan"]
+        command: "-"
+        networks:
+            - default
+            - viapais
 
-node:  
-    build: dockerfiles/node
-    volumes_from:
-        - data
-    working_dir: /var/www/html
+    node:  
+        build: dockerfiles/node
+        volumes_from:
+            - data
+        working_dir: /var/www/html
 
-gulp:  
-    build: dockerfiles/node
-    volumes_from:
-        - data
-    working_dir: /var/www/html
-    environment:
-        DISABLE_NOTIFIER: 'true'
-    entrypoint: ["gulp"]
-    command: "default"
+    gulp:  
+        build: dockerfiles/node
+        volumes_from:
+            - data
+        working_dir: /var/www/html
+        environment:
+            DISABLE_NOTIFIER: 'true'
+        entrypoint: ["gulp"]
+        command: "default"
 
-backup:
-    image: mysql
-    links:
-        - db:db
-    entrypoint: mysqldump
-    command: --user=docker --password=docker --host=db sge #dump20160425.sql
+    backup:
+        image: mysql
+        links:
+            - db:db
+        entrypoint: mysqldump
+        command: --user=docker --password=docker --host=db sge #dump20160425.sql
+
+networks:
+    viapais:
+        external:
+            name: viapais_default
